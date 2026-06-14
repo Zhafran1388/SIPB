@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SIPB — Sistem Informasi Perikanan & Budidaya</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo">
+      <div class="logo-icon">🐟</div>
+      <div>
+        <p class="logo-title">SIPB01</p>
+        <p class="logo-sub">Dinas Perikanan</p>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <button class="nav-item active" onclick="showPage('dashboard')">
+        <span class="nav-icon">▣</span> Dashboard
+      </button>
+      <button class="nav-item" onclick="showPage('data-ikan')">
+        <span class="nav-icon">🐠</span> Data Ikan
+      </button>
+      <button class="nav-item" onclick="showPage('tambak')">
+        <span class="nav-icon">🏞</span> Tambak & Kolam
+      </button>
+      <button class="nav-item" onclick="showPage('produksi')">
+        <span class="nav-icon">📊</span> Produksi
+      </button>
+      <button class="nav-item" onclick="showPage('petani')">
+        <span class="nav-icon">👤</span> Data Petani
+      </button>
+      <button class="nav-item" onclick="showPage('laporan')">
+        <span class="nav-icon">📄</span> Laporan
+      </button>
+      <button class="nav-item" onclick="showPage('peta')">
+        <span class="nav-icon">🗺</span> Peta Tambak
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <p>v1.0 · Kab. Sumenep/p>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <span class="page-title" id="page-title">Dashboard</span>
+      </div>
+      <div class="topbar-right">
+        <span class="badge-date" id="tanggal"></span>
+        <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
+        <div class="avatar">DS</div>
+      </div>
+    </header>
+
+    <!-- PAGES -->  
+
+    <!-- DASHBOARD -->
+    <section class="page active" id="page-dashboard">
+      <div class="section-header">
+        <h2>Selamat datang, Petugas</h2>
+        <p>Ringkasan data perikanan dan budidaya hari ini</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card teal">
+          <p class="stat-label">Total Produksi (ton)</p>
+          <p class="stat-value" id="stat-produksi">0</p>
+          <p class="stat-note">↑ 12% dari bulan lalu</p>
+        </div>
+        <div class="stat-card blue">
+          <p class="stat-label">Jumlah Tambak</p>
+          <p class="stat-value" id="stat-tambak">0</p>
+          <p class="stat-note">Aktif terdaftar</p>
+        </div>
+        <div class="stat-card coral">
+          <p class="stat-label">Petani Terdaftar</p>
+          <p class="stat-value" id="stat-petani">0</p>
+          <p class="stat-note">Terverifikasi</p>
+        </div>
+        <div class="stat-card amber">
+          <p class="stat-label">Jenis Ikan</p>
+          <p class="stat-value" id="stat-ikan">0</p>
+          <p class="stat-note">Komoditas budidaya</p>
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="card">
+          <h3>Produksi per Bulan (2024)</h3>
+          <div class="bar-chart" id="bar-chart"></div>
+          <div class="bar-labels" id="bar-labels"></div>
+        </div>
+        <div class="card">
+          <h3>Komoditas Unggulan</h3>
+          <ul class="rank-list" id="rank-list"></ul>
+        </div>
+      </div>
+
+      <div class="card full">
+        <h3>Aktivitas Terbaru</h3>
+        <table class="data-table">
+          <thead>
+            <tr><th>Tanggal</th><th>Kegiatan</th><th>Petani</th><th>Lokasi</th><th>Status</th></tr>
+          </thead>
+          <tbody id="aktivitas-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- DATA IKAN -->
+    <section class="page" id="page-data-ikan">
+      <div class="section-header">
+        <h2>Data Jenis Ikan Budidaya</h2>
+        <button class="btn-primary" onclick="openModal('modal-ikan')">+ Tambah Ikan</button>
+      </div>
+
+      <div class="search-bar">
+        <input type="text" id="search-ikan" placeholder="Cari nama ikan..." oninput="filterIkan()"/>
+      </div>
+
+      <div class="card full">
+        <table class="data-table">
+          <thead>
+            <tr><th>No</th><th>Nama Ikan</th><th>Nama Latin</th><th>Kategori</th><th>Musim Panen</th><th>Harga/kg</th><th>Stok Benih</th><th>Aksi</th></tr>
+          </thead>
+          <tbody id="ikan-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAMBAK -->
+    <section class="page" id="page-tambak">
+      <div class="section-header">
+        <h2>Data Tambak & Kolam</h2>
+        <button class="btn-primary" onclick="openModal('modal-tambak')">+ Tambah Tambak</button>
+      </div>
+      <div class="card full">
+        <table class="data-table">
+          <thead>
+            <tr><th>ID</th><th>Nama Tambak</th><th>Luas (ha)</th><th>Jenis</th><th>Pemilik</th><th>Desa</th><th>Status</th><th>Aksi</th></tr>
+          </thead>
+          <tbody id="tambak-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PRODUKSI -->
+    <section class="page" id="page-produksi">
+      <div class="section-header">
+        <h2>Catatan Produksi</h2>
+        <div style="display:flex; gap:10px;">
+        <button class="btn-primary
+        " onclick="exportCSV()">⬇ Export CSV</button>
+        <button class="btn-primary" onclick="openModal('modal-produksi')">+ Input Produksi</button>
+        </div>
+      </div>
+
+      <div class="stats-grid" style="margin-bottom:1.5rem">
+        <div class="stat-card teal">
+          <p class="stat-label">Total Tahun Ini (ton)</p>
+          <p class="stat-value">847</p>
+        </div>
+        <div class="stat-card blue">
+          <p class="stat-label">Rata-rata/Bulan (ton)</p>
+          <p class="stat-value">70.6</p>
+        </div>
+        <div class="stat-card coral">
+          <p class="stat-label">Panen Terbanyak</p>
+          <p class="stat-value">Jun</p>
+        </div>
+      </div>
+
+      <div class="card full">
+        <table class="data-table">
+          <thead>
+            <tr><th>Tanggal</th><th>Petani</th><th>Tambak</th><th>Jenis Ikan</th><th>Berat (kg)</th><th>Harga/kg</th><th>Total (Rp)</th></tr>
+          </thead>
+          <tbody id="produksi-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PETANI -->
+    <section class="page" id="page-petani">
+      <div class="section-header">
+        <h2>Data Petani / Pembudidaya</h2>
+        <button class="btn-primary" onclick="openModal('modal-petani')">+ Daftarkan Petani</button>
+      </div>
+
+      <div class="search-bar">
+        <input type="text" id="search-petani" placeholder="Cari nama petani..." oninput="filterPetani()"/>
+      </div>
+
+      <div class="card-grid" id="petani-grid"></div>
+    </section>
+
+    <!-- PETA TAMBAK -->
+    <section class="page" id="page-peta">
+      <div class="section-header">
+    <h2>Peta Sebaran Tambak</h2>
+    <p>Lokasi tambak & kolam terdaftar di Kab. Sumenep</p>
+     </div>
+    <div class="card full">
+      <div id="map" style="height: 500px; border-radius: 10px;"></div>
+    </div>
+    </section>
+
+    <!-- LAPORAN -->
+    <section class="page" id="page-laporan">
+      <div class="section-header">
+        <h2>Laporan & Ekspor Data</h2>
+      </div>
+      <div class="row-2">
+        <div class="card">
+          <h3>Filter Laporan</h3>
+          <div class="form-group">
+            <label>Tahun</label>
+            <select id="lap-tahun"><option>2024</option><option>2023</option></select>
+          </div>
+          <div class="form-group">
+            <label>Bulan</label>
+            <select id="lap-bulan">
+              <option value="">Semua</option>
+              <option>Januari</option><option>Februari</option><option>Maret</option>
+              <option>April</option><option>Mei</option><option>Juni</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Jenis Laporan</label>
+            <select id="lap-jenis">
+              <option>Laporan Produksi</option>
+              <option>Laporan Petani</option>
+              <option>Laporan Tambak</option>
+            </select>
+          </div>
+          <button class="btn-primary" style="width:100%" onclick="generateLaporan()">Buat Laporan</button>
+        </div>
+        <div class="card">
+          <h3>Ringkasan Cepat</h3>
+          <div id="laporan-output">
+            <p style="color:#888;font-size:14px">Pilih filter lalu klik "Buat Laporan"</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== MODALS ===== -->
+
+  <!-- Modal Tambah Ikan -->
+  <div class="modal-overlay" id="modal-ikan" onclick="closeModalOutside(event,'modal-ikan')">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Tambah Jenis Ikan</h3>
+        <button onclick="closeModal('modal-ikan')">✕</button>
+      </div>
+      <div class="form-group"><label>Nama Ikan</label><input type="text" id="f-ikan-nama" placeholder="Contoh: Udang Vaname"/></div>
+      <div class="form-group"><label>Nama Latin</label><input type="text" id="f-ikan-latin" placeholder="Contoh: Litopenaeus vannamei"/></div>
+      <div class="form-group">
+        <label>Kategori</label>
+        <select id="f-ikan-kategori">
+          <option>Air Tawar</option><option>Air Laut</option><option>Air Payau</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Musim Panen</label><input type="text" id="f-ikan-musim" placeholder="Contoh: April – Oktober"/></div>
+      <div class="form-group"><label>Harga per kg (Rp)</label><input type="number" id="f-ikan-harga" placeholder="Contoh: 45000"/></div>
+      <div class="form-group"><label>Stok Benih (ekor)</label><input type="number" id="f-ikan-stok" placeholder="Contoh: 5000"/></div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('modal-ikan')">Batal</button>
+        <button class="btn-primary" onclick="tambahIkan()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Tambah Tambak -->
+  <div class="modal-overlay" id="modal-tambak" onclick="closeModalOutside(event,'modal-tambak')">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Tambah Tambak / Kolam</h3>
+        <button onclick="closeModal('modal-tambak')">✕</button>
+      </div>
+      <div class="form-group"><label>Nama Tambak</label><input type="text" id="f-tambak-nama" placeholder="Contoh: Tambak Maju Jaya"/></div>
+      <div class="form-group"><label>Luas (hektar)</label><input type="number" id="f-tambak-luas" step="0.1" placeholder="Contoh: 2.5"/></div>
+      <div class="form-group">
+        <label>Jenis</label>
+        <select id="f-tambak-jenis"><option>Tambak</option><option>Kolam</option><option>Keramba</option></select>
+      </div>
+      <div class="form-group"><label>Pemilik</label><input type="text" id="f-tambak-pemilik" placeholder="Nama pemilik"/></div>
+      <div class="form-group"><label>Desa / Kelurahan</label><input type="text" id="f-tambak-desa" placeholder="Contoh: Ds. Sidoarjo"/></div>
+      <div class="form-group"><label>Latitude</label><input type="number" id="f-tambak-lat" step="0.0001" placeholder="Contoh: -7.0521"/></div>
+      <div class="form-group"><label>Longitude</label><input type="number" id="f-tambak-lng" step="0.0001" placeholder="Contoh: 112.7188"/></div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('modal-tambak')">Batal</button>
+        <button class="btn-primary" onclick="tambahTambak()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Input Produksi -->
+  <div class="modal-overlay" id="modal-produksi" onclick="closeModalOutside(event,'modal-produksi')">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Input Hasil Produksi</h3>
+        <button onclick="closeModal('modal-produksi')">✕</button>
+      </div>
+      <div class="form-group"><label>Tanggal Panen</label><input type="date" id="f-prod-tanggal"/></div>
+      <div class="form-group"><label>Nama Petani</label><input type="text" id="f-prod-petani" placeholder="Nama pembudidaya"/></div>
+      <div class="form-group"><label>Nama Tambak</label><input type="text" id="f-prod-tambak" placeholder="Nama tambak"/></div>
+      <div class="form-group">
+        <label>Jenis Ikan</label>
+        <select id="f-prod-ikan"></select>
+      </div>
+      <div class="form-group"><label>Berat Panen (kg)</label><input type="number" id="f-prod-berat" placeholder="Contoh: 500"/></div>
+      <div class="form-group"><label>Harga per kg (Rp)</label><input type="number" id="f-prod-harga" placeholder="Otomatis dari data ikan"/></div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('modal-produksi')">Batal</button>
+        <button class="btn-primary" onclick="tambahProduksi()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Tambah Petani -->
+  <div class="modal-overlay" id="modal-petani" onclick="closeModalOutside(event,'modal-petani')">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Daftarkan Petani Baru</h3>
+        <button onclick="closeModal('modal-petani')">✕</button>
+      </div>
+      <div class="form-group"><label>Nama Lengkap</label><input type="text" id="f-pet-nama" placeholder="Nama petani"/></div>
+      <div class="form-group"><label>NIK</label><input type="text" id="f-pet-nik" placeholder="16 digit NIK"/></div>
+      <div class="form-group"><label>Telepon</label><input type="text" id="f-pet-telp" placeholder="Contoh: 081234567890"/></div>
+      <div class="form-group"><label>Desa / Kelurahan</label><input type="text" id="f-pet-desa" placeholder="Alamat desa"/></div>
+      <div class="form-group">
+        <label>Komoditas Utama</label>
+        <div class="form-group"><label>Latitude</label><input type="number" id="f-pet-lat" step="0.0001" placeholder="Contoh: -7.0521"/></div>
+      <div class="form-group"><label>Longitude</label><input type="number" id="f-pet-lng" step="0.0001" placeholder="Contoh: 112.7188"/></div>
+        <select id="f-pet-komoditas"></select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('modal-petani')">Batal</button>
+        <button class="btn-primary" onclick="tambahPetani()">Daftarkan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
